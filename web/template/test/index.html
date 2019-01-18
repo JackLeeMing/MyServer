@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Kpages 单元测试模块</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<style type="text/css">
+.tree{
+    width: 100%;
+}
+
+.treegrid-indent {
+    width:16px;
+    height: 16px;
+    display: inline-block;
+    position: relative;
+}
+.treegrid-expander {
+    width:16px;
+    height: 16px;
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+}
+.treegrid-expander-expanded{
+    background-image: url(/static/libs/treegrid/collapse.png);
+}
+.treegrid-expander-collapsed{
+    background-image: url(/static/libs/treegrid/expand.png);
+}
+
+</style>
+</head>
+<body>
+<div >
+    
+    <table class='table table-striped tree'>
+        <tr>
+            <th style='width:30px'><button type="button" class="btn btn-primary btn-sm btn-run—all"> 测试</button></th>
+            <th>用例名称</th>
+            <th>运行情况</th>
+        </tr>
+        {% for node in suites %}
+        <tr class="treegrid-{{ node.get('_id')}} {% if not node.get('parent')== 'root' %}treegrid-parent-{{ node.get('parent')}} {% end %}  case"  id='{{ node["code"]}}'>
+            <td style='width:30px'><button type="button" class="btn btn-primary btn-sm btn-run"> 测试</button></td>
+            <td title="{{ node.get('doc','') or ''}}">{{ node['name']}}</td>
+            <td></td>
+        </tr>
+        {% end %}
+    </table>
+
+</div>
+<script src='/static/libs/jquery-2.0.3.min.js'></script>
+<script src="/static/libs/treegrid/jquery.treegrid.js"></script>
+<script>
+
+    function is_empty_object(obj){
+        for(var k in obj){
+            return false
+        }
+        return true;
+    }
+
+
+    $(function(){
+        $('.tree').treegrid({treeColumn: 1});
+        //$('.tree').treegrid('getRootNodes').treegrid('collapse');
+
+        var em = {};
+
+        function check_error(btn,rs){
+           em = rs.data;
+           if(is_empty_object(em)){
+                return;
+           }else{
+                btn.removeClass('btn-primary').addClass('btn-danger')
+           }
+
+           $('.case').each(function(index, tr) {
+                var id = $(tr).attr('id');
+                var message = em[id];
+                if(message){
+                     //$(tr).find('.btn-run').toggleClass('btn-primary btn-danger');
+                     $(tr).find('.btn-run').removeClass('btn-primary').addClass('btn-danger')
+                     $(tr).find('td').eq(2).html(message);
+                }
+           });
+        }
+
+        $('.btn-run').click(function(event) {
+              var code = $(this).parents('tr').attr('id');
+              var btn = $(this);
+              $.post('/test?code='+code,function(rs){
+                   check_error(btn,rs);
+              })
+        });
+
+        $('.btn-run—all').click(function(event) {
+              var btn = $(this);
+              $.post('/test',function(rs){
+                   check_error(btn,rs);
+              })
+        }); 
+
+    })
+
+</script>
+</body>
+</html>
